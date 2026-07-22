@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mwrl-suzuki"
+version = "0.1.0"
+description = "Minimal-witness recovery of minimal reaction-condition sets on a real Suzuki dataset (MWRL benchmark)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+  "mwrl",
+  "torch>=2.1",
+  "PyYAML>=6.0",
+  "numpy>=1.24",
+]
+
+[project.optional-dependencies]
+# The real reaction fingerprint. Without these the pipeline falls back to a
+# dependency-free hashed n-gram fingerprint (for testing only, not for results).
+fp = ["drfp>=0.3", "rdkit>=2023.3"]
+dev = ["pytest>=8.0", "ruff>=0.4"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]

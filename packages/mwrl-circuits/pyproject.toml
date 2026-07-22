@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mwrl-circuits"
+version = "0.1.0"
+description = "Hierarchical minimal-circuit discovery on LLMs (Qwen3) for Minimal-Witness RL."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+  "mwrl",
+  "torch>=2.1",
+  "PyYAML>=6.0",
+  "transformers>=4.51",
+  "accelerate>=0.30",
+  "safetensors>=0.4",
+  "huggingface_hub>=0.23",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.4"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]

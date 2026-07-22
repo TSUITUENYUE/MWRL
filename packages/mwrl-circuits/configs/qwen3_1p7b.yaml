@@ -1,0 +1,21 @@
+# Primary run: Qwen3-1.7B, component-level (heads + MLP sublayers).
+model_name: Qwen/Qwen3-1.7B
+device: auto              # cuda if available
+dtype: bfloat16
+attn_implementation: eager
+families: [factual_recall, arithmetic, agreement]
+tau: 0.8                  # circuit must retain >= 80% of the full-model margin
+restrict: true           # confine each sub-task search to its family's support
+mwrl:
+  baseline: mean         # up-set advantage centering (mean | rloo | l2o)
+  k: 12                  # rollouts per group; 12 is the cap for the exact 2^k coverage credit
+  groups_per_update: 5   # cover all train behaviors each update (5 = 6 behaviors - 1 holdout)
+  updates: 40            # count converges by ~update 8; 40 is plenty
+  max_steps: 0           # H: episode-length cap; 0 -> n_comp (add/remove from the full set)
+  lr: 1.0e-3             # lower LR for stable coverage-credit training
+  entropy_coef: 0.02
+  hidden: 512            # policy MLP over the 2*n_comp+1 conditioned observation
+  batch_seqs: 2048       # (masks x prompts) per batched ablation forward on the 48GB L40
+  inner_iters: 8         # EAP-dropout refinement steps per canonicalization
+  eval_samples: 128      # antichain samples (uncapped #found; batched minimality check)
+  seed: 0

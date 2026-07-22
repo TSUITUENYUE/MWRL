@@ -1,0 +1,30 @@
+# Qwen3-8B coverage, second attempt: fix the p=0.7 dynamic-range collapse seen in
+# mwrl-cov8b_475078. At 1188 components, nu = 0.7^|S| makes the smallest success in a
+# group out-credit the rest by ~10^6, so the gradient is winner-take-all and the policy
+# over-shrinks past sufficiency (success pinned at ~0.12 for 30 updates). p=0.9 tames the
+# ratio; K=48 with the Monte-Carlo coverage credit gives ~5 successes per group at the
+# same success rate, so the relational (containment) credit actually engages.
+model_name: Qwen/Qwen3-8B
+device: auto
+dtype: bfloat16
+attn_implementation: eager
+families: [factual_recall, arithmetic, agreement]
+tau: 0.8
+restrict: true
+mwrl:
+  valuation: coverage
+  nu: geometric
+  nu_p: 0.9               # 0.7 -> 0.9: credit ratio between group successes stays bounded
+  baseline: l2o
+  k: 48                   # >12 engages the MC union-measure estimator (no extra s0 calls)
+  mc_samples: 20000
+  groups_per_update: 2    # 96 rollouts/update (~1.6x the failed run) keeps wall-time sane
+  updates: 14             # ~16h train + ~2h eval fits the 24h wall with margin
+  max_steps: 0
+  lr: 1.0e-3
+  entropy_coef: 0.02
+  hidden: 512
+  batch_seqs: 1024
+  inner_iters: 4
+  eval_samples: 64        # half the usual eval so the report always lands before the wall
+  seed: 0

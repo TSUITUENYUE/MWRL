@@ -1,0 +1,30 @@
+# Qwen3-8B flat COUNT: the controlled A/B partner of qwen3_8b_cov.yaml (job 475078).
+# Every line is identical to that coverage run except `valuation: count`, so the pair
+# isolates the credit: same 6 behaviors, same k/groups/updates/lr/inner_iters/eval, same
+# machine class. Count ignores the nu/nu_p/mc_samples keys (its credit is the binary
+# deduplicated mode count on the canonicalized witness), so they stay for the exact diff.
+# Deliverable: the success curve. If count climbs where coverage pinned at ~0.12, the
+# failure is the coverage credit's geometry at this scale, not the configuration.
+model_name: Qwen/Qwen3-8B
+device: auto
+dtype: bfloat16
+attn_implementation: eager
+families: [factual_recall, arithmetic, agreement]
+tau: 0.8                  # circuit must retain >= 80% of the full-model KL signal
+restrict: true
+mwrl:
+  valuation: count        # THE ONLY CHANGED LINE vs qwen3_8b_cov.yaml: the controlled A/B
+  nu: geometric           # geometric measure -> MC-scalable + scale-invariant shrink preference
+  nu_p: 0.7               # p = 0.7 ~= 1/sqrt2, the maximin default
+  baseline: l2o          # unbiased leave-two-out centering (defined for the coverage measure)
+  k: 12                   # <=12 -> exact 2^k inclusion-exclusion coverage credit; MC above
+  groups_per_update: 5    # all train behaviors each update (6 - 1 holdout)
+  updates: 30             # coverage converges slower than count; 30 with margin under the 24h wall
+  max_steps: 0            # H -> n_comp (add/remove over the full component set, no search restriction)
+  lr: 1.0e-3
+  entropy_coef: 0.02
+  hidden: 512
+  batch_seqs: 1024        # 8B activations ~4x the 1.7B; half the 1.7B L40 budget (2048)
+  inner_iters: 4          # EAP-dropout success-search rounds; 4 (lean), 8B forwards are heavy
+  eval_samples: 128       # uncapped #found, batched minimality check
+  seed: 0

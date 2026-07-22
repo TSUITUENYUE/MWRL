@@ -1,0 +1,29 @@
+# Qwen3-8B flat COVERAGE (geometric measure) on the L40 (48GB) -- the certificate-free,
+# no-canonicalizer credit for the LLM regime. The coverage credit reads only the raw up-set
+# measure of each proposal (never the minimal witness Phi), so it trades the count valuation's
+# fidelity for the ability to skip the exact canonicalizer -- the R+C corner of the trilemma.
+# Geometric p=0.7 is required: it is the only measure the MC estimator can sample (product form)
+# AND holds a scale-invariant shrink signal, so the coverage credit computes at 8B scale.
+model_name: Qwen/Qwen3-8B
+device: auto
+dtype: bfloat16
+attn_implementation: eager
+families: [factual_recall, arithmetic, agreement]
+tau: 0.8                  # circuit must retain >= 80% of the full-model KL signal
+restrict: true
+mwrl:
+  valuation: coverage     # raw up-set measure credit, no canonicalizer Phi
+  nu: geometric           # geometric measure -> MC-scalable + scale-invariant shrink preference
+  nu_p: 0.7               # p = 0.7 ~= 1/sqrt2, the maximin default
+  baseline: l2o          # unbiased leave-two-out centering (defined for the coverage measure)
+  k: 12                   # <=12 -> exact 2^k inclusion-exclusion coverage credit; MC above
+  groups_per_update: 5    # all train behaviors each update (6 - 1 holdout)
+  updates: 30             # coverage converges slower than count; 30 with margin under the 24h wall
+  max_steps: 0            # H -> n_comp (add/remove over the full component set, no search restriction)
+  lr: 1.0e-3
+  entropy_coef: 0.02
+  hidden: 512
+  batch_seqs: 1024        # 8B activations ~4x the 1.7B; half the 1.7B L40 budget (2048)
+  inner_iters: 4          # EAP-dropout success-search rounds; 4 (lean), 8B forwards are heavy
+  eval_samples: 128       # uncapped #found, batched minimality check
+  seed: 0

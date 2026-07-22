@@ -1,0 +1,27 @@
+# Hierarchical COVERAGE on Qwen3-8B (L40): the controlled partner of the 4090's
+# hierarchical COUNT run. Byte-identical to qwen3_8b.yaml in every shared key; the only
+# additions are the three coverage-specific keys below (count has no measure, so they have
+# no count counterpart and default from the established coverage configs).
+model_name: Qwen/Qwen3-8B
+device: auto
+dtype: bfloat16
+attn_implementation: eager
+families: [knowledge, arithmetic, grammar, temporal]
+tau: 0.8
+restrict: true
+mwrl:
+  valuation: coverage   # +1 of 3: the credit under comparison
+  nu: geometric         # +2 of 3: coverage-only measure key
+  nu_p: 0.7             # +3 of 3: the paper's default geometric tilt
+  baseline: l2o
+  k: 10
+  groups_per_update: 3
+  updates: 8
+  max_steps: 0
+  lr: 1.0e-3
+  entropy_coef: 0.02
+  hidden: 512
+  batch_seqs: 512      # KL forward materializes fp32 [batch*prompts, vocab]; keep it memory-safe on 24GB
+  inner_iters: 4
+  eval_samples: 24
+  seed: 0

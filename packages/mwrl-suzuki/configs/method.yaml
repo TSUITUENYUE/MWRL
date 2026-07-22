@@ -1,0 +1,29 @@
+# Canonical method settings for the Suzuki amortization experiment. These are the exact
+# hyperparameters behind Table 2 (tab:amortization) and its supplement config table: one
+# fingerprint-conditioned MWRL policy over the 14-dimension augmented library, evaluated at
+# a deployment budget of 32. Running `python -m mwrl_suzuki.run` or `.baselines` with no
+# --config reproduces the paper; smoke tests override --updates on the command line.
+#
+# The reaction-condition schema, shared baseline, candidate values, bit order, and success
+# threshold are inferred and validated from the generated CSV, not set here.
+
+fingerprint:
+  method: descriptors   # 33-dim interpretable substrate descriptors from SMILES (NOT DRFP)
+  n_bits: 33
+
+mwrl:
+  k: 32
+  groups_per_update: 8
+  updates: 4800
+  lr: 0.0005
+  entropy_coef: 0.02
+  hidden: 256
+  eval_samples: 128
+  seed: 0
+  valuation: coverage
+  baseline: l2o
+  nu: geometric
+  nu_p: 0.7
+  mc_samples: 20000
+  per_updates: 400
+  per_k: 32

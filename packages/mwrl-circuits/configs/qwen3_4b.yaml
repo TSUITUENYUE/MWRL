@@ -1,0 +1,22 @@
+# 3-level hierarchical verify on Qwen3-4B (fits the 4090 easily: ~8GB weights).
+# families here is ignored by hierarchical3 (it uses build_taxonomy's 3-level tree).
+model_name: Qwen/Qwen3-4B
+device: auto
+dtype: bfloat16
+attn_implementation: eager
+families: [knowledge, reasoning]
+tau: 0.8
+restrict: true
+mwrl:
+  baseline: l2o
+  k: 10
+  groups_per_update: 3
+  updates: 12               # moderate: verify the 3-level pipeline recovers circuits per level
+  max_steps: 0
+  lr: 1.0e-3
+  entropy_coef: 0.02
+  hidden: 512
+  batch_seqs: 384
+  inner_iters: 6
+  eval_samples: 48
+  seed: 0

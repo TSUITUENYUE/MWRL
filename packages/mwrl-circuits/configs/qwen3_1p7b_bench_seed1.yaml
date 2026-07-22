@@ -1,0 +1,41 @@
+# MMLU domain experts on Qwen3-1.7B: the 10 subjects passing the 0.92 dense bar
+# (bench.MMLU_SUBJECTS, from the all-57 sweep, job 476567). Hyperparameters are the 1.7B
+# reference (qwen3_1p7b.yaml) unchanged except two forced adaptations, both documented:
+#   groups_per_update 5 -> 10: the reference covers every train behavior each update
+#     (its comment: "cover all train behaviors each update"); 10 behaviors keep that rule.
+#   batch_seqs 2048 -> 192: benchmark prompts are ~50-140 tokens (vs ~15), so the
+#     masks*prompts budget per forward drops ~10x to stay inside the same memory.
+# Seed replicate 1 of the 4090 seed-0 run (user sign-off 2026-07-15): the ONLY
+# diff from qwen3_1p7b_bench.yaml is seed: 1. batch_seqs stays 192 (the L40S
+# test measured no gain from larger batches; the run is GPU-bound).
+# Credit contract (user decision 2026-07-14): coverage valuation with the geometric
+# measure nu(upS)=p^|S|, p=0.7 (the paper's ~1/sqrt2 maximin), and the unbiased l2o
+# centering, which is defined for the coverage measure only. This matches the 8B
+# hierarchical study's contract and drops count's per-success canonicalization.
+# witness_scale remains "mean" (hardcoded in run.py; the MaxSAT mean-vs-std ablation
+# showed no material difference). inner_iters 8 -> 2 (user direction 2026-07-14): a lean
+# existential closure; the 8B hierarchical used 4 at ~4x the model size. Same k, updates,
+# lr, entropy, hidden, eval_samples, tau, seed as the reference.
+model_name: Qwen/Qwen3-1.7B
+device: auto
+dtype: bfloat16
+attn_implementation: eager
+families: [mmlu]
+tau: 0.8
+restrict: true
+mwrl:
+  valuation: coverage
+  nu: geometric
+  nu_p: 0.7
+  baseline: l2o
+  k: 12
+  groups_per_update: 10
+  updates: 40
+  max_steps: 0
+  lr: 1.0e-3
+  entropy_coef: 0.02
+  hidden: 512
+  batch_seqs: 192
+  inner_iters: 2
+  eval_samples: 128
+  seed: 1

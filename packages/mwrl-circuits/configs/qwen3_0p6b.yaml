@@ -1,0 +1,22 @@
+# Quick real-model check: Qwen3-0.6B. Runs on a single small GPU (or CPU slowly).
+# Use this first on the cluster to confirm real weights give full_metric > 0 before
+# committing GPU-hours to 1.7B/8B.
+model_name: Qwen/Qwen3-0.6B
+device: auto
+dtype: bfloat16
+attn_implementation: eager
+families: [arithmetic, agreement]
+tau: 0.8
+restrict: true
+mwrl:
+  baseline: mean
+  k: 8
+  groups_per_update: 4
+  updates: 80
+  max_size: 32
+  lr: 3.0e-3
+  entropy_coef: 0.02
+  hidden: 128
+  eval_samples: 48
+  eval_minimal_cap: 24
+  seed: 0

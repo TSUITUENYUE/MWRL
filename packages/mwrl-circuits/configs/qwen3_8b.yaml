@@ -1,0 +1,27 @@
+# Scaled 3-level hierarchical + router on Qwen3-8B.
+# `families` is ignored by hierarchical3/route (they use build_taxonomy's 24-leaf tree).
+# inner_iters=4 (lean): 8B forwards are ~4x heavier than 1.7B and cross-mask batching gives no
+# speedup (the inner optimizer is already GPU-batched), so the budget comes from fewer dropout
+# rounds. batch_seqs=1536 is the masks*prompts sequence budget per forward; with logits_to_keep=1
+# the memory wall (all-position vocab logits) is gone, so the coarse 60-prompt family passes fill
+# the GPU (batch_masks ~= 25) instead of underfilling at ~4, ~6x fewer forwards.
+model_name: Qwen/Qwen3-8B
+device: auto
+dtype: bfloat16
+attn_implementation: eager
+families: [knowledge, arithmetic, grammar, temporal]
+tau: 0.8
+restrict: true
+mwrl:
+  baseline: l2o
+  k: 10
+  groups_per_update: 3
+  updates: 8
+  max_steps: 0
+  lr: 1.0e-3
+  entropy_coef: 0.02
+  hidden: 512
+  batch_seqs: 512      # KL forward materializes fp32 [batch*prompts, vocab]; keep it memory-safe on 24GB
+  inner_iters: 4
+  eval_samples: 24
+  seed: 0

@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mwrl"
+version = "0.1.0"
+description = "Minimal-Witness Reinforcement Learning: a benchmark-agnostic framework for recovering the antichain of minimal sufficient witnesses."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "MWRL Contributors" }]
+dependencies = [
+  "numpy>=1.24",
+  "pydantic>=2.5",
+  "PyYAML>=6.0",
+  "torch>=2.1",
+]
+
+[project.optional-dependencies]
+dev = ["mypy>=1.8", "pytest>=8.0", "ruff>=0.4"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
