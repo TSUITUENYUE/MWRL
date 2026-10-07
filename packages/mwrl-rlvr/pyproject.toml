@@ -3,16 +3,17 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mwrl-maxsat"
+name = "mwrl-rlvr"
 version = "0.1.0"
-description = "MaxSAT prime-implicant-enumeration benchmark for Minimal-Witness RL (exact ground truth)."
+description = "Minimal-Witness RL as an RLVR objective for LLM post-training (data sufficiency, exact antichains)."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 dependencies = [
   "mwrl",
   "numpy>=1.24",
-  "torch>=2.1",
+  "pandas>=2.0",
+  "pyarrow>=14",
 ]
 
 [tool.setuptools.packages.find]

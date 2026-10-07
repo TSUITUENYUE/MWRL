@@ -17,15 +17,5 @@ dependencies = [
   "torch>=2.1",
 ]
 
-[project.optional-dependencies]
-dev = ["mypy>=1.8", "pytest>=8.0", "ruff>=0.4"]
-
 [tool.setuptools.packages.find]
 where = ["src"]
-
-[tool.ruff]
-line-length = 120
-target-version = "py311"
-
-[tool.ruff.lint]
-select = ["E", "F", "I", "UP"]

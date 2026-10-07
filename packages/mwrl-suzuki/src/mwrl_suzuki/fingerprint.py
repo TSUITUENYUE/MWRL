@@ -138,7 +138,7 @@ def reaction_fingerprint(
 
 def drfp_available() -> bool:
     try:
-        import drfp  # noqa: F401
+        import drfp  # only checks that the package is installed
 
         return True
     except Exception:

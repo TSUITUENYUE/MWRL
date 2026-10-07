@@ -7,9 +7,9 @@ package is the library: the up-set l1o/l2o credit, the amortized grouped
 ``Runner``, the ``Actor`` module, and the ``MWRLEnv`` interface. A benchmark brings its
 own environment (any action/observation space); the runner only needs, at a terminal
 step, the witness ``S`` and its success ``s_c(S)``. The scalar baselines (maxrl / grpo /
-rloo) ride the same runner as other advantages; the non-amortized baselines (GFlowNet for
-MaxSAT, ACDC/EAP for circuits) live with their benchmark. The MaxSAT, circuits, and Suzuki
-benchmarks depend only on this package.
+rloo / maxrl_size / maxent) ride the same runner as other advantages; the non-amortized baselines (GFlowNet for
+MaxSAT, ACDC/EAP for circuits) live with their benchmark. The MaxSAT, circuits, Suzuki, and
+RLVR benchmarks depend only on this package.
 """
 
 from mwrl.advantage import mwrl_group_advantages

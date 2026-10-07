@@ -27,7 +27,7 @@ is the unbiased leave-two-out estimator **l2o** (the default).
 | --- | --- |
 | `env.py` | `MWRLEnv` — the environment interface the runner drives (rsl_rl-style). |
 | `modules.py` | `Actor` — a masked-categorical MLP over the environment's action space. |
-| `runner.py` | `Runner` — the amortized grouped score-function policy gradient. |
+| `runner.py` | `Runner` — the amortized grouped score-function policy gradient, with the size-penalized scalar (`maxrl_size`) and MaxEnt RL (`maxent`) advantages. |
 | `advantage.py` | The MWRL per-sample advantage for one context's group of `K` rollouts. |
 | `credit.py` | The lattice-valued coverage credit and its l1o/l2o estimators. |
 | `baselines.py` | Scalar group-advantage rules (maxrl, grpo, rloo) sharing the same runner. |
@@ -37,14 +37,14 @@ is the unbiased leave-two-out estimator **l2o** (the default).
 
 A benchmark supplies its own environment with any action and observation space. The runner
 only needs, at a terminal step, the proposed witness `S` and its verifier bit `s_c(S)`. The
-MaxSAT, circuits, and Suzuki benchmarks in this repository all depend only on this package.
+MaxSAT, circuits, Suzuki, and RLVR benchmarks in this repository all depend only on this package.
 
 ## Install
 
 The repository is a `uv` workspace (`requires-python >= 3.11`). From the repository root:
 
 ```bash
-uv sync
+uv sync --all-packages
 ```
 
 `mwrl` is imported as a library; it has no command-line entry point of its own. See the

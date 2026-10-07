@@ -48,7 +48,7 @@ class ChemTask:
     yield_by_mask: dict[int, float]         # deviation set -> best measured yield
     max_yield: float
     threshold: float
-    fingerprint: np.ndarray = field(default=None)  # type: ignore[assignment]
+    fingerprint: np.ndarray = field(default=None)
     dim_values: list[list[str]] = field(default_factory=list)   # candidate values per dimension (the verifier's search domain)
     baseline: list[str] = field(default_factory=list)           # baseline value per dimension
     yield_table: dict[tuple[str, ...], float] = field(default_factory=dict)  # full assignment -> best yield

@@ -5,8 +5,8 @@ The credit is ``A_i = V(U_K) - V(U_{-i})`` (theory 4.4), plugged into the score-
 estimator ``grad J = E[sum_i A_i grad log P(tau_i | c)]`` (theory 4.2). That estimator is
 REINFORCE, so ``reinforce`` is the default optimizer; ``ppo`` adds clipping for the PPO
 baseline and reduces to plain REINFORCE at ``clip_epsilon = 0``. The advantage axis
-(``mwrl`` or the scalar ``maxrl``/``grpo``/``rloo``) and the optimizer axis (``reinforce``
-or ``ppo``) vary independently. Amortization is the outer loop: each update samples
+(``mwrl`` or the scalar ``maxrl``/``grpo``/``rloo``/``maxrl_size``/``maxent``) and the optimizer
+axis (``reinforce`` or ``ppo``) vary independently. Amortization is the outer loop: each update samples
 ``c ~ D`` and trains one policy ``pi_theta(.|c)`` over the whole distribution.
 """
 
@@ -44,7 +44,7 @@ class Rollout:
     obs: list[np.ndarray]
     action_masks: list[np.ndarray]
     actions: list[int]
-    log_probs: list[float]      # sampling-time log-probs (used only by the PPO baseline)
+    log_probs: list[float]      # sampling-time log-probs (the PPO baseline and the MaxEnt soft return)
     witness: int
     canon: int
     success: bool
@@ -53,14 +53,15 @@ class Rollout:
 
 class Runner:
     def __init__(self, env: MWRLEnv, config: GroupedRLConfig, *, advantage: str = "mwrl",
-                 optimizer: str = "reinforce", size_penalty: float = 0.0,
+                 optimizer: str = "reinforce", size_penalty: float = 0.0, maxent_alpha: float = 0.0,
                  device: str = "cpu", seed: int = 0) -> None:
         torch.manual_seed(seed)
         self.env = env
         self.config = config
-        self.advantage = advantage        # "mwrl" | "maxrl" | "grpo" | "rloo" | "maxrl_size"
+        self.advantage = advantage        # "mwrl" | "maxrl" | "grpo" | "rloo" | "maxrl_size" | "maxent"
         self.optimizer = optimizer        # "reinforce" (default, = the method) | "ppo" (baseline)
         self.size_penalty = size_penalty
+        self.maxent_alpha = maxent_alpha  # entropy temperature of the "maxent" soft return
         self.device = torch.device(device)
         self.rng = np.random.default_rng(seed)
         self.actor = Actor(env.num_obs, env.num_actions, hidden_dim=config.hidden_dim).to(self.device)
@@ -118,6 +119,11 @@ class Runner:
             rewards = [float(s) - self.size_penalty * popcount(r.witness)
                        for s, r in zip(successes, group, strict=True)]
             rew = torch.as_tensor(rewards, dtype=torch.float32, device=self.device)
+            adv = (rew - rew.mean()) / (rew.std() + self.config.epsilon)
+        elif self.advantage == "maxent":  # MaxEnt RL: soft return s(S) - lambda*|S| - alpha*log pi(tau)
+            soft = [float(s) - self.size_penalty * popcount(r.witness) - self.maxent_alpha * sum(r.log_probs)
+                    for s, r in zip(successes, group, strict=True)]
+            rew = torch.as_tensor(soft, dtype=torch.float32, device=self.device)
             adv = (rew - rew.mean()) / (rew.std() + self.config.epsilon)
         else:
             rew = torch.as_tensor([r.reward for r in group], dtype=torch.float32, device=self.device)

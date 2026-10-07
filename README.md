@@ -17,12 +17,12 @@ A_i = V(U_K) - V(U_{-i}) >= 0
 ```
 
 where `U_K` is the up-set of the `K` witnesses sampled for a context and `V` is a
-coverage valuation over `2^[d]`. Dominated or failed samples receive exactly zero credit.
+coverage valuation over `2^[d]`. Dominated or failed samples receive zero credit.
 Used directly this is the leave-one-out estimator `l1o`; centered by a baseline from the
 other trajectories it is the unbiased leave-two-out estimator `l2o` (the default). The
 estimator is the score function (REINFORCE): `grad J = E[ sum_i A_i grad log P(tau_i | c) ]`.
 
-This repository is a workspace: one benchmark-agnostic library plus three benchmarks that
+This repository is a workspace: one benchmark-agnostic library plus four benchmarks that
 are all instances of the *same* problem, differing only in what a variable is and how the
 verifier answers.
 
@@ -31,11 +31,12 @@ verifier answers.
 | a MaxSAT variable | do the opened variables satisfy the instance | exact antichain (prime implicants) |
 | a reaction-condition dimension | does a tabulated reaction clear the yield threshold | exact closed-world antichain |
 | an LLM component (head / MLP) | does the ablated model still do the task | open world (born-minimality) |
+| a statement in an LLM's answer | do the chosen statements determine the hidden value | exact antichain (all 256 subsets) |
 
 ## The core library (`mwrl`)
 
 `mwrl` is an rsl_rl-style RL library. It owns the **method** (the up-set credit) and the
-**amortized runner**, and nothing about any benchmark. A benchmark brings its own
+**amortized runner**. The benchmark package brings its own
 environment with full control over the observation and action spaces. The only
 MWRL-specific contract is that at a terminal step the environment reports the witness `S`
 (a bitmask over the context's variables) and its success `s_c(S)`.
@@ -54,15 +55,16 @@ runner = Runner(MyEnv(...), MWRLConfig(...), advantage="mwrl", optimizer="reinfo
 runner.train()
 ```
 
-Two independent axes select the algorithm:
+Two variables to select the algorithm:
 
 - `advantage`: `mwrl` (the method, up-set l1o/l2o credit) or the scalar baselines
-  `maxrl` / `grpo` / `rloo` / `maxrl_size`.
+  `maxrl` / `grpo` / `rloo` / `maxrl_size` / `maxent` (MaxEnt RL, the soft return with a size
+  penalty).
 - `optimizer`: `reinforce` (the method's estimator) or `ppo` (clipped baseline; set
   `clip_epsilon = 0` to recover unclipped steps).
 
-MaxRL, GRPO, RLOO, and PPO are therefore baselines expressed as other settings of the
-*same* runner. The non-amortized baselines (GFlowNet for MaxSAT; ACDC / EAP / Wanda for
+MaxRL, GRPO, RLOO, MaxEnt RL, and PPO are therefore baselines expressed as other settings of
+the *same* runner. The non-amortized baselines (GFlowNet for MaxSAT; ACDC / EAP / Wanda for
 circuits) live with their benchmark; the core carries only the amortized method and the
 scalar-advantage baselines that share its runner.
 
@@ -74,7 +76,7 @@ packages/
   mwrl-maxsat/    benchmark: prime-implicant enumeration (exact ground truth)
   mwrl-circuits/  benchmark: minimal-circuit discovery on a frozen Qwen3 (own configs/)
   mwrl-suzuki/    benchmark: minimal reaction-condition sets on Suzuki-Miyaura coupling
-Makefile          make install | format | lint | typecheck
+  mwrl-rlvr/      benchmark: RLVR post-training of Qwen3-4B-Base with verl (exact ground truth)
 ```
 
 Each benchmark package depends only on `mwrl`.
@@ -82,20 +84,14 @@ Each benchmark package depends only on `mwrl`.
 ## Install
 
 ```bash
-make install        # uv venv .venv + editable install of all four packages
+uv sync --all-packages
 ```
 
-Equivalently:
+This creates `.venv` with every package of the workspace installed in editable mode; run the
+commands below with `uv run`. Device selection is automatic (CUDA, then Apple MPS, then CPU);
+override with `device:` in a config.
 
-```bash
-uv venv .venv --python 3.11
-uv pip install -e packages/mwrl -e packages/mwrl-maxsat -e packages/mwrl-circuits -e packages/mwrl-suzuki --python .venv/bin/python
-```
-
-Device selection is automatic (CUDA, then Apple MPS, then CPU); override with `device:` in
-a config.
-
-## Benchmark: MaxSAT (exact ground truth)
+## Benchmark: MaxSAT (Controlled RL experiments)
 
 Prime-implicant enumeration is the clean testbed: the exact antichain of minimal witnesses
 is computable, so born-minimality, antichain recall, and mode count are all measurable.
@@ -103,12 +99,14 @@ Every method runs through the core `Runner` over an add-a-variable MDP; the benc
 supplies only the environment and the exact-antichain scoring.
 
 ```bash
-.venv/bin/python -m mwrl_maxsat.table
+uv run python -m mwrl_maxsat.table
 ```
 
 This prints the per-method diagnostic table under both the coverage and count valuations
 (MWRL against PPO, MaxRL, GRPO, RLOO, GFlowNet, and MaxRL+size), with value iteration on
-the subset lattice as the recovery ceiling.
+the subset lattice as the recovery ceiling. `uv run python -m mwrl_maxsat.size_penalty_sweep`
+runs the size-penalty sweeps of MaxEnt RL and GFlowNet, whose best settings are the
+size-penalized rows of the paper's MaxSAT table.
 
 ## Benchmark: circuits (Qwen3)
 
@@ -119,7 +117,7 @@ ground-truth antichain, so the benchmark scores born-minimality, the number of d
 minimal circuits found, and faithfulness.
 
 ```bash
-.venv/bin/python -m mwrl_circuits.run --config packages/mwrl-circuits/configs/qwen3_1p7b_bench.yaml
+uv run python -m mwrl_circuits.run --config packages/mwrl-circuits/configs/qwen3_1p7b_bench.yaml
 ```
 
 Configs for the 0.6B, 1.7B, and 8B Qwen3 models are in `packages/mwrl-circuits/configs/`.
@@ -137,7 +135,7 @@ library and recovers each held-out substrate's antichain with no per-substrate s
 
 ```bash
 # Amortization table (MWRL, Substrate-blind, Scalar RL, per-substrate ceiling).
-.venv/bin/python -m mwrl_suzuki.baselines --data /path/to/suzuki_conditions.csv --holdout 205 --seed 0
+uv run python -m mwrl_suzuki.baselines --data /path/to/suzuki_conditions.csv --holdout 205 --seed 0
 ```
 
 The benchmark reads a single self-contained reaction CSV and treats unmeasured
@@ -146,9 +144,19 @@ CSV, distributed as a 38 MB gzip on
 [Google Drive](https://drive.google.com/file/d/1ybcKhG88jG78QE5T7fS1j3LWOWoHvIhV/view?usp=sharing);
 download it, run `gunzip suzuki_conditions.csv.gz`, and pass the CSV with `--data`.
 
-## Development
+## Benchmark: RLVR post-training (data sufficiency)
+
+Each problem lists 8 true statements about two hidden integers, and an answer is a set of
+statements that determines one of them, together with its value. Adding a statement never
+removes the hidden point, so the verifier is monotone and the minimal answers form an
+antichain, computed exactly from all 256 subsets. We post-train Qwen3-4B-Base with verl and
+compare MWRL with GRPO, MaxRL, GRPO with a size penalty or a minimality oracle, and a
+diversity reward with and without a size penalty, all on the same model, data and budget.
 
 ```bash
-make lint         # ruff
-make typecheck    # mypy over every package's src
+# The data: 128,000 training and 512 held-out problems.
+uv run python -m mwrl_rlvr.data --out runs/rlvr/data/ds_v1 --train 128000 --test 512
 ```
+
+Training and the held-out evaluation need GPUs and the verl / vLLM stack;
+`packages/mwrl-rlvr/README.md` lists that stack and gives the verl command for each method.

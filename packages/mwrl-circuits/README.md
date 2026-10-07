@@ -44,7 +44,7 @@ Configurations are a matrix of model size × valuation. The valuation suffix is 
 
 ## Reproduce
 
-From the repository root, after `uv sync`. The models are downloaded from the Hugging Face
+From the repository root, after `uv sync --all-packages`. The models are downloaded from the Hugging Face
 Hub on first use, so a GPU and network (or a warm `HF_HOME` cache) are required.
 
 ```bash

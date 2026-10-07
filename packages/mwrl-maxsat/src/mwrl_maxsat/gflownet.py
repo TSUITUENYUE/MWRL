@@ -8,6 +8,7 @@ scalar RL optimum. Two reward variants match the paper's rows:
 Because R is a per-OBJECT value (not a leave-one-out marginal), proportional sampling puts most mass
 on the exponentially many non-minimal supersets, so raw proposals are rarely minimal -- the contrast
 with MWRL's marginal-coverage credit. Evaluated with the same antichain scorer (``evaluate``).
+``PenalizedGFlowNet`` generalizes both variants to R = exp(-lam |S|), the size-penalty sweep.
 
 Trajectory balance with a uniform backward policy: on the add-only DAG a size-k terminal has k!
 add-orderings, so log P_B(tau) = -log(k!), and the TB residual is
@@ -91,3 +92,26 @@ class GFlowNet:
     def rollout(self, context) -> Rollout:
         obss, ams, acts, mask, success, canon = self._sample(context)
         return Rollout(obss, ams, acts, [], mask, canon, success, float(success))
+
+
+class PenalizedGFlowNet(GFlowNet):
+    """Trajectory-balance GFlowNet with log R(S) = -lam |S| on witnesses.
+
+    lam = 0 is the success variant and lam = log(1/p) the up-set variant. A failed terminal keeps the
+    log 1e-4 floor wherever that lies below the smallest witness reward, and otherwise sits 100x below
+    it. ``logz_lr`` gives log Z its own Adam learning rate, the usual trajectory-balance setup; ``None``
+    keeps one learning rate (3e-3) for the policy and log Z.
+    """
+
+    def __init__(self, env: MaxSatEnv, *, lam: float, logz_lr: float | None = None, seed: int = 0) -> None:
+        super().__init__(env, reward="upset", p=0.7, seed=seed)
+        self.lam = lam
+        self.floor = min(math.log(1e-4), -lam * env.horizon - math.log(100.0))
+        if logz_lr is not None:
+            self.opt = torch.optim.Adam([{"params": list(self.pf.parameters()), "lr": 3e-3},
+                                         {"params": [self.logZ], "lr": logz_lr}])
+
+    def _log_reward(self, mask: int, success: bool) -> float:
+        if not success:
+            return self.floor
+        return (-self.lam) * bin(mask).count("1")
