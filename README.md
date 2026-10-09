@@ -1,5 +1,7 @@
 # Minimal-Witness Reinforcement Learning
 
+I would recommend to first read my blog https://tytsui.com/blog/correct-minimal-and-all/ before moving on to the details in the paper.
+
 MWRL learns to identify **minimal sufficient witnesses**. Given a context `c`, a
 verifier `s_c(S)` reports whether opening a subset of variables `S ⊆ [d]` is *sufficient*
 (the downstream task succeeds). The subsets that are sufficient but lose sufficiency if
