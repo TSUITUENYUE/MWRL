@@ -57,8 +57,8 @@ different `--config` never changes the dataset schema. A different dataset is su
 through `--data`.
 
 The dataset is one reaction CSV, distributed as a 38 MB gzip on
-[Google Drive](https://drive.google.com/file/d/1ybcKhG88jG78QE5T7fS1j3LWOWoHvIhV/view?usp=sharing).
-Download it (or `gdown 1ybcKhG88jG78QE5T7fS1j3LWOWoHvIhV`), run
+[Hugging Face](https://huggingface.co/datasets/tytsui/suzuki-conditions).
+Download `suzuki_conditions.csv.gz` from the dataset's Files tab, run
 `gunzip suzuki_conditions.csv.gz`, and pass the CSV with `--data`.
 
 ## Package map
