@@ -143,7 +143,7 @@ uv run python -m mwrl_suzuki.baselines --data /path/to/suzuki_conditions.csv --h
 The benchmark reads a single self-contained reaction CSV and treats unmeasured
 combinations as failures under the closed-world assumption. The dataset is one reaction
 CSV, distributed as a 38 MB gzip on
-[Google Drive](https://drive.google.com/file/d/1ybcKhG88jG78QE5T7fS1j3LWOWoHvIhV/view?usp=sharing);
+[Hugging Face](https://huggingface.co/datasets/tytsui/suzuki-conditions);
 download it, run `gunzip suzuki_conditions.csv.gz`, and pass the CSV with `--data`.
 
 ## Benchmark: RLVR post-training (data sufficiency)
